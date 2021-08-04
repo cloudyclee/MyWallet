@@ -1,5 +1,6 @@
 import axios from "axios";
-const url = "http://localhost:3000/api/wallet";
+const localURL = "http://localhost:3000/api/wallet";
+const url = "https://my-wallet-by-jin.herokuapp.com/api/wallet";
 
 const walletRequest = axios.create( {
     baseURL: url
