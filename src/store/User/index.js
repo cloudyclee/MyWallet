@@ -4,29 +4,6 @@ import {
     postApiUserLoginWithGoogle,
     patchApiUserUpdate
 } from "../../api";
-import { ElMessage } from "element-plus";
-
-const errorHandling = ( err ) => {
-    let errObj;
-    if ( err.response ) {
-        // Request made and server responded
-        console.log( err.response.data );
-        console.log( err.response.status );
-        ElMessage.error( { message: err.response.data.msg, customClass: "maxWidth-90" } );
-        errObj = err.response.data;
-    } else if ( err.request ) {
-        // The request was made but no response was received
-        console.log( err.request );
-        ElMessage.error( { message: "系統錯誤，請洽客服人員", customClass: "maxWidth-90" } );
-        errObj = err.request;
-    } else {
-        // Something happened in setting up the request that triggered an Error
-        console.log( 'Error', err.message );
-        ElMessage.error( { message: "系統錯誤，請洽客服人員", customClass: "maxWidth-90" } );
-        errObj = err.message;
-    }
-    return errObj;
-};
 
 export default {
     namespaced: true,
@@ -44,7 +21,7 @@ export default {
                 commit( "setUserActive", loginRes.data );
                 return loginRes.data || registerRes.data;
             } catch ( err ) {
-                return errorHandling( err );
+                return err;
             }
         },
         async handleLogin ( { commit }, payload ) {
@@ -55,7 +32,7 @@ export default {
                 commit( "setUserActive", res.data );
                 return res.data;
             } catch ( err ) {
-                return errorHandling( err );
+                return err;
             }
         },
         async handleLoginWithGoogle ( { commit }, payload ) {
@@ -66,7 +43,7 @@ export default {
                 commit( "setUserActive", res.data );
                 return res.data;
             } catch ( err ) {
-                return errorHandling( err );
+                return err;
             }
         },
         async handleUpdateUser ( { commit }, payload ) {
@@ -77,7 +54,7 @@ export default {
                 commit( "setUserActive", res.data );
                 return res.data;
             } catch ( err ) {
-                return errorHandling( err );
+                return err;
             }
         },
         handleRemoveUser ( { commit } ) {

@@ -70,6 +70,7 @@ export default {
 			if (!valid.value) {
 				return false;
 			}
+			isEditable[key] = false;
 
 			const token = computed(() => {
 				return store.getters["User/getToken"];
@@ -92,7 +93,6 @@ export default {
 					duration: 2000,
 					customClass: "maxWidth-90",
 				});
-				isEditable[key] = false;
 			} catch (error) {
 				console.log(error.msg || error);
 			}
@@ -150,7 +150,10 @@ export default {
 					:prop="`[${idx}]`"
 					:rules="rules"
 				>
-					<el-input v-model="formData[key][idx]" />
+					<el-input
+						v-model="formData[key][idx]"
+						:disabled="!isEditable[key]"
+					/>
 					<el-button
 						plain
 						type="danger"
@@ -158,7 +161,7 @@ export default {
 						class="delete-button"
 						:disabled="!isEditable[key]"
 					>
-						删除
+						刪除
 					</el-button>
 				</el-form-item>
 				<el-button

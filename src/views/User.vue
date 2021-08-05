@@ -16,6 +16,7 @@ export default {
 		const user = computed(() => {
 			return store.getters["User/getUserData"];
 		});
+		const isGoogleUser = ref(user.value.googleID !== undefined);
 
 		// define refs
 		const formRef = ref(null);
@@ -92,30 +93,29 @@ export default {
 			isEditable[key] = !isEditable[key];
 		};
 
-		const isLoading = ref(false);
 		const checkPwdText = ref("檢查");
 		const checkPwdType = ref("warning");
 		const checkOriginalPwd = async () => {
 			if (!isEditable.password && !isEditable.pwdCheck) {
-				isLoading.value = true;
 				try {
 					// if pass the validator, then start login process
 					const checkUser = await store.dispatch("User/handleLogin", {
 						userEmail: user.value.userEmail,
 						password: formData.originalPwd,
 					});
-					isLoading.value = false;
 					if (!checkUser || !checkUser.success) throw checkUser;
+					ElMessage.success({
+						message: "檢查通過，可變更密碼",
+						type: "success",
+						center: true,
+						customClass: "maxWidth-90",
+					});
 
 					// if login successes
 					isEditable.password = true;
 					isEditable.pwdCheck = true;
-					checkPwdText.value = "成功";
-					checkPwdType.value = "success";
-					setTimeout(() => {
-						checkPwdText.value = "取消";
-						checkPwdType.value = "danger";
-					}, 3000);
+					checkPwdText.value = "取消";
+					checkPwdType.value = "danger";
 				} catch (error) {
 					console.log(error.msg || error);
 				}
@@ -134,6 +134,9 @@ export default {
 				valid.value = pass;
 			});
 			if (!valid.value) return false;
+			Object.keys(isEditable).forEach((key) => {
+				isEditable[key] = false;
+			});
 
 			let data = {};
 			if (formData.userName !== user.value.userName) {
@@ -165,8 +168,9 @@ export default {
 				ElMessage.success({
 					message: "變更成功！",
 					type: "success",
+					center: true,
+					customClass: "maxWidth-90",
 				});
-				console.log(user.value);
 			} catch (error) {
 				console.log(error.msg || error);
 			}
@@ -178,6 +182,7 @@ export default {
 		});
 
 		return {
+			isGoogleUser,
 			formLabelPosition,
 			formRef,
 			isEditable,
@@ -186,7 +191,6 @@ export default {
 			handleUpdateUserData,
 			changeEditStatus,
 			checkOriginalPwd,
-			isLoading,
 			checkPwdText,
 			checkPwdType,
 		};
@@ -206,7 +210,6 @@ export default {
 					label-width="140px"
 					status-icon
 					:hide-required-asterisk="true"
-					inline-message
 				>
 					<el-form-item label="使用者名稱" prop="userName">
 						<el-input
@@ -241,12 +244,13 @@ export default {
 							v-model="formData.originalPwd"
 							placeholder="請輸入原密碼"
 							show-password
+							:disabled="isGoogleUser"
 						></el-input>
 						<el-button
 							plain
 							:type="checkPwdType"
 							@click="checkOriginalPwd"
-							:loading="isLoading"
+							:disabled="isGoogleUser"
 						>
 							{{ checkPwdText }}
 						</el-button>
@@ -323,6 +327,9 @@ export default {
 			.el-input__inner
 				cursor: default
 				vertical-align: middle
+		.el-form-item__error
+			left: 50%
+			transform: translateX(-110%)
 		.transparent-button
 			display: inline-block
 			min-height: none
@@ -343,7 +350,7 @@ export default {
 			font-size: 14px
 @media screen and (min-width: 768px)
 	.user-container
-		.content-row
+		.el-row
 			width: 70%
 @media screen and (max-width: 500px)
 	.user-container
@@ -359,6 +366,9 @@ export default {
 				margin-left: 0
 				.el-input__inner
 					text-align: center
+			.el-form-item__error
+				left: 50%
+				transform: translateX(-50%)
 			.el-button, .transparent-button
 				width: 80%
 			.transparent-button

@@ -3,13 +3,13 @@ import { ref, reactive, watch, computed, onBeforeMount } from "vue";
 import { PieChart, BarChart, LineChart } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import { useStore } from "vuex";
-import { use } from "echarts/core"
+import { use } from "echarts/core";
 import {
 	TitleComponent,
 	TooltipComponent,
 	LegendComponent,
 	GridComponent,
-	VisualMapComponent
+	VisualMapComponent,
 } from "echarts/components";
 import VChart from "vue-echarts";
 
@@ -22,21 +22,19 @@ use([
 	TooltipComponent,
 	LegendComponent,
 	GridComponent,
-	VisualMapComponent
+	VisualMapComponent,
 ]);
 
 export default {
 	components: {
 		VChart,
 	},
-	async setup() {
+	setup() {
 		const store = useStore();
 
 		const token = computed(() => {
 			return store.getters["User/getToken"];
 		});
-		await store.dispatch("Wallet/handleGetWallets", token.value);
-
 		const user = computed(() => {
 			return store.getters["User/getUserData"];
 		});
@@ -52,7 +50,9 @@ export default {
 		const getDateBefore = (day, DateObj = null) => {
 			const dateBefore = DateObj || new Date();
 			if (!DateObj) {
-				dateBefore.setTime(new Date().getTime() - 3600 * 1000 * 24 * day);
+				dateBefore.setTime(
+					new Date().getTime() - 3600 * 1000 * 24 * day
+				);
 			}
 			const year = dateBefore.getFullYear();
 			let month = dateBefore.getMonth() + 1;
@@ -60,7 +60,7 @@ export default {
 			let date = dateBefore.getDate();
 			date = date < 10 ? "0" + date : date;
 			return `${year}-${month}-${date}`;
-		}
+		};
 		// user's selections
 		const userSelect = reactive({
 			wallet: "all",
@@ -68,7 +68,7 @@ export default {
 			timeTo: getDateBefore(0),
 			selected_expenseType: allTypes.expense,
 			selected_incomeType: allTypes.income,
-			customTime: [getDateBefore(90), getDateBefore(0)]
+			customTime: [getDateBefore(90), getDateBefore(0)],
 		});
 
 		// get selected wallets data
@@ -101,26 +101,6 @@ export default {
 			return ws;
 		});
 
-		// set change event for check box
-		const isIndeterminate = reactive({
-			expense: false,
-			income: false,
-		});
-		const selectedAll = reactive({
-			expense: true,
-			income: true,
-		});
-		const handleCheckAllChange = (opt, val) => {
-			userSelect[`selected_${opt}Type`] = val ? allTypes[opt] : [];
-			isIndeterminate.[opt] = false;
-		};
-		const handleCheckedTypesChange = (opt, value) => {
-			const checkedCount = value.length;
-			selectedAll[opt] = checkedCount === allTypes[opt].length;
-			isIndeterminate[opt] =
-				checkedCount > 0 && checkedCount < allTypes[opt].length;
-		};
-
 		// set chart data
 		const chartData = reactive({
 			x: [],
@@ -128,152 +108,226 @@ export default {
 			income: [],
 			remain: [],
 			expenseData: [],
-			incomeData: []
-		})
+			incomeData: [],
+		});
 		// get chart data
 		const getChartData = () => {
-			const start = userSelect.timeFrom === "custom"
-							? userSelect.customTime[0] : userSelect.timeFrom;
-			const end = userSelect.timeFrom === "custom"
-							? userSelect.customTime[1] : userSelect.timeTo;
+			const start =
+				userSelect.timeFrom === "custom"
+					? userSelect.customTime[0]
+					: userSelect.timeFrom;
+			const end =
+				userSelect.timeFrom === "custom"
+					? userSelect.customTime[1]
+					: userSelect.timeTo;
 			const Mstart = start.split("-")[1] - 0;
 			const Mend = end.split("-")[1] - 0;
-			const date_range = [start];
+			const date_range = [];
 
 			chartData.x = [];
-			chartData.expense = [];
-			chartData.income = [];
-			chartData.remain = [];
-			chartData.expenseData = [];
-			chartData.incomeData = [];
 
 			for (let i = Mstart; i < Mend + 1; i++) {
 				const dateStr = new Date(`${start.split("-")[0]}-${i + 1}`);
 				const dateStr2 = new Date(new Date(end).getTime() + 86400000);
-				const rangeEnd = i === Mend
-									? getDateBefore(0, dateStr2) : getDateBefore(0, dateStr);
+				const rangeEnd =
+					i === Mend
+						? getDateBefore(0, dateStr2)
+						: getDateBefore(0, dateStr);
 				chartData.x.push(`${i}月`);
 				date_range.push(rangeEnd);
 			}
+			const len = chartData.x.length;
+			chartData.expense = new Array(len).fill(0);
+			chartData.income = new Array(len).fill(0);
+			chartData.remain = new Array(len).fill(0);
+			chartData.expenseData = [];
+			chartData.incomeData = [];
+			let pe = {};
+			let pi = {};
 
-			chartData.x.forEach((item, idx) => {
-				let e = 0;
-				let i = 0;
-				let r = 0;
-				let pe = {};
-				let pi = {};
-				selectedWallets.value.forEach(wallet => {
-					wallet.transaction.forEach(trans => {
-						const transDate = new Date(trans.date);
-						const consumeType = trans.consumeType;
+			selectedWallets.value.forEach((wallet) => {
+				wallet.transaction.forEach((trans) => {
+					const transDate = new Date(trans.date).getTime();
+					const start_date = new Date(start).getTime() - 3600000 * 8;
+					const consumeType = trans.consumeType;
 
-						if ( transDate >= new Date(date_range[idx]) &&
-							transDate < new Date(date_range[idx + 1]) &&
-							(userSelect.selected_expenseType.indexOf(consumeType) !== -1 ||
-							userSelect.selected_incomeType.indexOf(consumeType) !== -1)
-						) {
-							if (trans.transType === "income") {
-								i += trans.amount;
-								r += trans.amount;
-								pi[consumeType] = pi[consumeType] === undefined
-													? 0 + trans.amount
-													: pi[consumeType] + trans.amount;
-							} else {
-								e += trans.amount;
-								r -= trans.amount;
-								pe[consumeType] = pe[consumeType] === undefined
-													? 0 + trans.amount
-													: pe[consumeType] + trans.amount;
-							}
+					if (
+						transDate >= start_date &&
+						(userSelect.selected_expenseType.indexOf(
+							consumeType
+						) !== -1 ||
+							userSelect.selected_incomeType.indexOf(
+								consumeType
+							) !== -1)
+					) {
+						let i = 0;
+						let end_date =
+							new Date(date_range[i]).getTime() - 3600000 * 8;
+
+						while (i <= len && transDate >= end_date) {
+							i++;
+							end_date =
+								new Date(date_range[i]).getTime() - 3600000 * 8;
 						}
-					});
-				});
-				chartData.expense.push(e);
-				chartData.income.push(i);
-				chartData.remain.push(r);
-				console.log(pe);
-				Object.keys(pe).forEach(key => {
-					chartData.expenseData.push({value: pe[key], name: key});
-				});
-				Object.keys(pi).forEach(key => {
-					chartData.incomeData.push({value: pi[key], name: key});
+
+						if (trans.transType === "income") {
+							chartData.income[i] += trans.amount;
+							chartData.remain[i] += trans.amount;
+							pi[consumeType] =
+								pi[consumeType] === undefined
+									? 0 + trans.amount
+									: pi[consumeType] + trans.amount;
+						} else {
+							chartData.expense[i] += trans.amount;
+							chartData.remain[i] -= trans.amount;
+							pe[consumeType] =
+								pe[consumeType] === undefined
+									? 0 + trans.amount
+									: pe[consumeType] + trans.amount;
+						}
+					}
 				});
 			});
-		};
-		getChartData();
-		console.log(chartData);
 
+			Object.keys(pe).forEach((key) => {
+				chartData.expenseData.push({ value: pe[key], name: key });
+			});
+			Object.keys(pi).forEach((key) => {
+				chartData.incomeData.push({ value: pi[key], name: key });
+			});
+
+			chartData.min =
+				Math.min(...chartData.expense) > Math.min(...chartData.income)
+					? Math.min(...chartData.income)
+					: Math.min(...chartData.expense);
+			chartData.max =
+				Math.max(...chartData.expense) > Math.max(...chartData.income)
+					? Math.max(...chartData.expense)
+					: Math.max(...chartData.income);
+			chartData.min = parseInt((chartData.min * 0.9) / 10) * 10;
+			chartData.max = parseInt((chartData.max * 1.1) / 10) * 10;
+			chartData.interval =
+				parseInt((chartData.max - chartData.min) / 60) * 10;
+			chartData.max = chartData.min + 6 * chartData.interval;
+		};
+
+		const bar = ref(null);
+		const pie = ref(null);
 		const isPie = ref(false);
 		const BarChartOption = computed(() => {
 			return {
 				tooltip: {
-					trigger: 'axis',
+					trigger: "axis",
 					axisPointer: {
-						type: 'cross',
+						type: "cross",
 						crossStyle: {
-							color: '#999'
-						}
-					}
+							color: "#999",
+						},
+					},
 				},
 				legend: {
-					data: ['支出', '收入', '餘額']
+					data: ["支出", "收入", "餘額"],
 				},
 				xAxis: [
 					{
-						type: 'category',
+						type: "category",
 						data: chartData.x,
 						axisPointer: {
-							type: 'shadow'
-						}
-					}
+							type: "shadow",
+						},
+					},
 				],
 				yAxis: [
 					{
-						type: 'value',
-						name: '金額',
+						type: "value",
+						min: chartData.min,
+						max: chartData.max,
+						interval: chartData.interval,
 						axisLabel: {
-							formatter: '{value} 元'
-						}
+							formatter: "{value}",
+						},
 					},
 					{
-						type: 'value',
-						name: '餘額',
-						axisLabel: {
-							formatter: '{value} 元'
-						}
-					}
+						show: false,
+						type: "value",
+						name: "月淨收入",
+					},
 				],
 				series: [
 					{
-						name: '支出',
-						type: 'bar',
-						color: '#ef6b7b',
-						data: chartData.expense
+						name: "支出",
+						type: "bar",
+						color: "#ef6b7b",
+						data: chartData.expense,
 					},
 					{
-						name: '收入',
-						type: 'bar',
-						color: '#87d4b1',
-						data: chartData.income
+						name: "收入",
+						type: "bar",
+						color: "#87d4b1",
+						data: chartData.income,
 					},
 					{
-						name: '餘額',
-						type: 'line',
+						name: "餘額",
+						type: "line",
 						yAxisIndex: 1,
-						data: chartData.remain
-					}
-				]
-			}
+						data: chartData.remain,
+					},
+				],
+				media: [
+					{
+						option: {
+							xAxis: [
+								{
+									axisLabel: {
+										fontSize: 12,
+									},
+								},
+							],
+							yAxis: [
+								{
+									axisLabel: {
+										margin: 8,
+										fontSize: 12,
+									},
+									offset: 10,
+								},
+							],
+						},
+					},
+					{
+						query: {
+							maxWidth: 540,
+						},
+						option: {
+							xAxis: [
+								{
+									axisLabel: {
+										fontSize: 8,
+									},
+								},
+							],
+							yAxis: [
+								{
+									axisLabel: {
+										margin: 4,
+										fontSize: 8,
+									},
+									offset: 0,
+								},
+							],
+						},
+					},
+				],
+			};
 		});
 		const PieChartOption = computed(() => {
 			return {
 				tooltip: {
-					trigger: 'item',
-					formatter: '{a} <br/>{b} : {c} ( {d}% )'
+					trigger: "item",
+					formatter: "{a} <br/>{b} : {c} ( {d}% )",
 				},
 				legend: {
-					orient: 'vertical',
-					left: 'left',
+					orient: "horizontal",
 				},
 				visualMap: [
 					{
@@ -281,76 +335,118 @@ export default {
 						min: 500,
 						max: 2000,
 						inRange: {
-							colorLightness: [0.2, 0.65]
+							colorLightness: [0.2, 0.65],
 						},
 					},
 				],
 				series: [
 					{
-						name: '占比',
-						type: 'pie',
-						radius: '50%',
-						center: ['25%', '50%'],
-						data: chartData.expenseData.sort((a, b) => b.value - a.value),
+						name: "支出占比",
+						type: "pie",
+						radius: "50%",
+						center: ["25%", "50%"],
+						data: chartData.expenseData.sort(
+							(a, b) => b.value - a.value
+						),
 						emphasis: {
 							itemStyle: {
 								shadowBlur: 10,
 								shadowOffsetX: 0,
-								shadowColor: 'rgba(0, 0, 0, 0.5)'
-							}
+								shadowColor: "rgba(0, 0, 0, 0.5)",
+							},
 						},
 						itemStyle: {
-							color: '#ef6b7b',
-							shadowColor: 'rgba(0, 0, 0, 0.5)'
+							color: "#ef6b7b",
+							shadowColor: "rgba(0, 0, 0, 0.5)",
 						},
 					},
 					{
-						name: '占比',
-						type: 'pie',
-						radius: '50%',
-						center: ['75%', '50%'],
-						data: chartData.incomeData.sort((a, b) => b.value - a.value),
+						name: "收入占比",
+						type: "pie",
+						radius: "50%",
+						center: ["75%", "50%"],
+						data: chartData.incomeData.sort(
+							(a, b) => b.value - a.value
+						),
 						emphasis: {
 							itemStyle: {
 								shadowBlur: 10,
 								shadowOffsetX: 0,
-								shadowColor: 'rgba(0, 0, 0, 0.5)'
-							}
+								shadowColor: "rgba(0, 0, 0, 0.5)",
+							},
 						},
 						itemStyle: {
-							color: '#87d4b1',
-							shadowColor: 'rgba(0, 0, 0, 0.5)'
+							color: "#87d4b1",
+							shadowColor: "rgba(0, 0, 0, 0.5)",
 						},
-					}
-				]
+					},
+				],
+				media: [
+					{
+						option: {
+							series: [
+								{
+									radius: [0, "40%"],
+									center: ["25%", "50%"],
+								},
+								{
+									radius: [0, "40%"],
+									center: ["75%", "50%"],
+								},
+							],
+						},
+					},
+					{
+						query: {
+							maxWidth: 546,
+						},
+						option: {
+							series: [
+								{
+									radius: [20, "30%"],
+									center: ["50%", "30%"],
+								},
+								{
+									radius: [20, "30%"],
+									center: ["50%", "75%"],
+								},
+							],
+						},
+					},
+				],
 			};
-		})
+		});
 
-		watch(() => ({...userSelect}), (nv, ov) => {
+		onBeforeMount(async () => {
+			await store.dispatch("Wallet/handleGetWallets", token.value);
 			getChartData();
-		})
+		});
+
+		watch(
+			() => ({ ...userSelect }),
+			(nv, ov) => {
+				getChartData();
+			},
+			{ deep: true }
+		);
 
 		return {
 			wallets,
 			userSelect,
 			selectedWallets,
 			allTypes,
-			isIndeterminate,
-			selectedAll,
-			handleCheckAllChange,
-			handleCheckedTypesChange,
 			BarChartOption,
 			PieChartOption,
 			getDateBefore,
-			isPie
+			isPie,
 		};
 	},
 };
 </script>
 
 <template>
-	<el-row>
-		<el-col :span="3">
+	<el-row class="analysis-row">
+		<el-col :span="24" :sm="{ span: 4, offset: 3 }">
 			<el-select
 				v-model="userSelect.wallet"
 				placeholder="請選擇帳戶"
@@ -364,21 +460,18 @@ export default {
 				/>
 			</el-select>
 		</el-col>
-		<el-col :span="8" :offset="1">
-			<el-radio-group v-model="userSelect.timeFrom" size="small">
-				<el-radio-button :label="getDateBefore(90)">
-					最近3個月
-				</el-radio-button>
-				<el-radio-button :label="getDateBefore(180)">
-					最近6個月
-				</el-radio-button>
-				<el-radio-button :label="`${new Date().getFullYear()}-01-01`">
-					從年初至今
-				</el-radio-button>
-				<el-radio-button label="custom">自訂</el-radio-button>
-			</el-radio-group>
+		<el-col :span="24" :sm="{ span: 4, offset: 2 }">
+			<el-select v-model="userSelect.timeFrom" size="small">
+				<el-option label="最近3個月" :value="getDateBefore(90)" />
+				<el-option label="最近6個月" :value="getDateBefore(180)" />
+				<el-option
+					label="今年"
+					:value="`${new Date().getFullYear()}-01-01`"
+				/>
+				<el-option label="自訂" value="custom" />
+			</el-select>
 		</el-col>
-		<el-col :span="6" :offset="1">
+		<el-col :span="22" :offset="1" :sm="{ span: 6, offset: 2 }">
 			<div>
 				<el-date-picker
 					v-model="userSelect.customTime"
@@ -395,78 +488,40 @@ export default {
 			</div>
 		</el-col>
 	</el-row>
-	<el-row class="select-row">
-		<el-col :span="4">
-			<span class="text">分析項目篩選</span>
-		</el-col>
-		<el-col :span="2">
-			<el-checkbox
-				:indeterminate="isIndeterminate.expense"
-				v-model="selectedAll.expense"
-				@change="handleCheckAllChange('expense', selectedAll.expense)"
-			>
-				支出項目全選
-			</el-checkbox>
-		</el-col>
-	</el-row>
-	<el-row class="group-row">
-		<el-col :span="20" :offset="4">
-			<el-checkbox-group
+	<el-row class="analysis-row select-row">
+		<el-col :span="24" :sm="{ span: 5, offset: 3 }">
+			<el-select
 				v-model="userSelect.selected_expenseType"
-				@change="
-					handleCheckedTypesChange(
-						'expense',
-						userSelect.selected_expenseType
-					)
-				"
+				multiple
+				collapse-tags
+				size="small"
 			>
-				<el-checkbox
+				<el-option
 					v-for="item in allTypes.expense"
-					:label="item"
 					:key="item"
+					:label="item"
+					:value="item"
 				>
-					{{ item }}
-				</el-checkbox>
-			</el-checkbox-group>
+				</el-option>
+			</el-select>
 		</el-col>
-	</el-row>
-	<el-row>
-		<el-col :span="2" :offset="4">
-			<el-checkbox
-				:indeterminate="isIndeterminate.income"
-				v-model="selectedAll.income"
-				@change="handleCheckAllChange('income', selectedAll.income)"
-			>
-				收入項目全選
-			</el-checkbox>
-		</el-col>
-	</el-row>
-	<el-row class="group-row">
-		<el-col :span="20" :offset="4">
-			<el-checkbox-group
+		<el-col :span="24" :sm="{ span: 5, offset: 1 }">
+			<el-select
 				v-model="userSelect.selected_incomeType"
-				@change="
-					handleCheckedTypesChange(
-						'income',
-						userSelect.selected_incomeType
-					)
-				"
+				multiple
+				collapse-tags
+				size="small"
 			>
-				<el-checkbox
+				<el-option
 					v-for="item in allTypes.income"
-					:label="item"
 					:key="item"
+					:label="item"
+					:value="item"
 				>
-					{{ item }}
-				</el-checkbox>
-			</el-checkbox-group>
+				</el-option>
+			</el-select>
 		</el-col>
-	</el-row>
-	<el-row style="margin-top: 40px;">
-		<el-col :span="4">
-			<span class="text">呈現方式</span>
-		</el-col>
-		<el-col :span="6" size="small">
+		<el-col :span="24" :sm="{ span: 6, offset: 1 }" class="chart-col">
 			<el-switch
 				v-model="isPie"
 				active-text="圓餅圖"
@@ -475,37 +530,60 @@ export default {
 			</el-switch>
 		</el-col>
 	</el-row>
-	<el-row>
-		<el-col>
-			<v-chart class="chart" :option="BarChartOption" v-if="!isPie" />
-		</el-col>
-		<el-col>
-			<v-chart class="chart" :option="PieChartOption" v-if="isPie" />
+	<el-row class="analysis-row">
+		<el-col :span="24" :sm="{ span: 18, offset: 3 }">
+			<v-chart
+				class="chart"
+				:option="BarChartOption"
+				v-if="!isPie"
+				:autoresize="true"
+			/>
+			<v-chart
+				class="chart"
+				:option="PieChartOption"
+				v-if="isPie"
+				:autoresize="true"
+			/>
 		</el-col>
 	</el-row>
 </template>
 
-<style lang="sass" scoped>
-.el-row
-	margin-top: 1rem
+<style lang="sass">
+.analysis-row
+	margin-top: 3rem
 	.el-col
-		text-align: left
-		.el-checkbox-group
-			display: flex
-			justify-content: flex-start
-			flex-wrap: wrap
-			width: 80%
-			.el-checkbox
-				width: 14.85%
+		text-align: center
+		.el-date-editor, .el-select
+			max-width: 250px
 		.text
 			padding-left: 15px
 			font-size: 14px
 		.chart
 			margin-top: 2rem
 			width: 100%
-			height: 400px
+			height: 500px
 	&.select-row
-		margin-top: 2rem
-	&.group-row
-		margin-top: 0
+		.el-col
+			text-align: left
+		.chart-col
+			text-align: center
+			.el-switch
+				height: 32px
+@media screen and (max-width: 767.9px)
+	.analysis-row
+		.el-col
+			.el-date-editor, .el-select
+				width: 250px
+				margin-bottom: 1.5rem
+				.el-input__inner, input
+					text-align: center
+				.el-select__tags
+					justify-content: center
+			.chart
+				margin-top: -1.5rem
+				margin-bottom: -50px
+		&.select-row
+			margin-top: 0rem
+			.el-col
+				text-align: center
 </style>

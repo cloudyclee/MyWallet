@@ -163,10 +163,12 @@ export default {
 			}
 		};
 
-		const googleInit = () => {
+		const localURL = "http://localhost:3000/api/auth/login";
+		const url = "https://my-wallet-by-jin.herokuapp.com/api/auth/google ";
+		const googleInit = (postURL) => {
 			google.accounts.id.initialize({
 				client_id: GOOGLE_CLIENT_ID,
-				login_uri: "http://localhost:3000/api/auth/login",
+				login_uri: postURL,
 				cancel_on_tap_outside: false,
 				callback: handleLoginWithGoogle,
 			});
@@ -180,10 +182,10 @@ export default {
 			google.accounts.id.prompt();
 		};
 		onMounted(() => {
-			googleInit();
+			googleInit(url);
 		});
 		onBeforeUpdate(() => {
-			googleInit();
+			googleInit(url);
 		});
 
 		return {

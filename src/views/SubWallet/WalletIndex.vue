@@ -150,7 +150,7 @@ export default {
 	.box-card
 		border-radius: 20px
 		padding: 35px 35px
-		text-align-last: left
+		text-align: left
 		.card-header
 			font-weight: bold
 			.text

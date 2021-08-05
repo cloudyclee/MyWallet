@@ -156,6 +156,12 @@ export default {
 				}
 				if (!valid.value) return false;
 
+				walletNameVisible.value = false;
+				amountVisible.value = false;
+				dialogueVisible.value = false;
+				walletName.value = "";
+				amount.value = 0;
+
 				try {
 					const updateWallet = await store.dispatch(
 						"Wallet/handleUpdateWallet",
@@ -166,14 +172,14 @@ export default {
 						}
 					);
 					if (!updateWallet.success) throw updateWallet;
+					ElMessage.success({
+						message: "變更成功",
+						customClass: "maxWidth-90",
+						center: true,
+					});
 				} catch (error) {
 					console.log(error.nsg || error);
 				}
-				walletName.value = "";
-				amount.value = 0;
-				walletNameVisible.value = false;
-				amountVisible.value = false;
-				dialogueVisible.value = false;
 			}
 		};
 
@@ -196,6 +202,7 @@ export default {
 				ElMessage.error({
 					message: "請輸入帳戶名稱",
 					customClass: "maxWidth-90",
+					center: true,
 				});
 			} else if (
 				walletName.value.length < 2 ||
@@ -205,6 +212,7 @@ export default {
 				ElMessage.error({
 					message: "名稱長度需介於2至30字元之間",
 					customClass: "maxWidth-90",
+					center: true,
 				});
 			}
 			return { walletName: walletName.value };
@@ -221,18 +229,21 @@ export default {
 				ElMessage.error({
 					message: "請輸入調整後的餘額",
 					customClass: "maxWidth-90",
+					center: true,
 				});
 			} else if (typeof amount.value !== "number") {
 				valid.value = false;
 				ElMessage.error({
 					message: "請輸入數字",
 					customClass: "maxWidth-90",
+					center: true,
 				});
 			} else if (amount.value === totalAmounts.value) {
 				valid.value = false;
 				ElMessage.error({
 					message: "請變更餘額",
 					customClass: "maxWidth-90",
+					center: true,
 				});
 			}
 			const data = {
@@ -251,6 +262,7 @@ export default {
 				ElMessage.warning({
 					message: "此帳戶已是主帳戶",
 					customClass: "maxWidth-90",
+					center: true,
 				});
 				return false;
 			}
@@ -276,6 +288,7 @@ export default {
 				ElMessage.success({
 					message: `已成功將「${wallet.value.walletName}」設為主帳戶`,
 					customClass: "maxWidth-90",
+					center: true,
 				});
 			} catch (error) {
 				console.log(error.msg || error);
@@ -287,6 +300,7 @@ export default {
 				ElMessage.error({
 					message: "主帳戶不可刪除。請先變更主帳戶",
 					customClass: "maxWidth-90",
+					center: true,
 				});
 				return false;
 			}
@@ -301,13 +315,6 @@ export default {
 						customClass: "maxWidth-90",
 					}
 				);
-				const loading = ElLoading.service({
-					lock: true,
-					text: "Loading",
-					spinner: "el-icon-loading",
-					background: "rgba(0, 0, 0, 0.7)",
-				});
-
 				const deleteWallet = await store.dispatch(
 					"Wallet/handleDeleteWallet",
 					{
@@ -315,11 +322,12 @@ export default {
 						_id: id.value,
 					}
 				);
-				if (!deleteWallet.success) {
-					loading.close();
-					throw deleteWallet;
-				}
-				loading.close();
+				if (!deleteWallet.success) throw deleteWallet;
+				ElMessage.success({
+					message: "刪除成功",
+					customClass: "maxWidth-90",
+					center: true,
+				});
 				router.push("/wallet");
 			} catch (error) {
 				console.log(error.msg || error);
@@ -349,12 +357,6 @@ export default {
 						customClass: "maxWidth-90",
 					}
 				);
-				const loading = ElLoading.service({
-					lock: true,
-					text: "Loading",
-					spinner: "el-icon-loading",
-					background: "rgba(0, 0, 0, 0.7)",
-				});
 				const transcRecord = computed(() => {
 					let idx;
 					let transc = wallet.value.transaction;
@@ -376,11 +378,12 @@ export default {
 						_id: id.value,
 					}
 				);
-				if (!deleteTransc.success) {
-					loading.close();
-					throw deleteTransc;
-				}
-				loading.close();
+				if (!deleteTransc.success) throw deleteTransc;
+				ElMessage.success({
+					message: "記錄刪除成功",
+					customClass: "maxWidth-90",
+					center: true,
+				});
 			} catch (error) {
 				console.log(error.msg || error);
 			}
