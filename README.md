@@ -98,10 +98,12 @@
 - passport 設定
 	- 根目錄下建立 `config` 資料夾，並於其中建立 `passport_jwt.js` 檔
 	- 首先引入 `passport-jwt` 套件中的相關方法：	
+	
+	```js
+	const JwtStrategy = require( "passport-jwt" ).Strategy;
+	const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
 	```
-const JwtStrategy = require( "passport-jwt" ).Strategy;
-const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
-	```
+	
 	- 也需要引入 user model
 	- 使用 `ExtractJwt.fromAuthHeaderWithScheme()` 方法，便可驗證夾帶在 Header 中的 jwt tokenm。相關使用方式可參考[官方文件](http://www.passportjs.org/packages/passport-jwt/)
 
@@ -111,7 +113,7 @@ const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
 
 	- 全局引入 Element-plus，首先
 	
-	```
+	```js
 	import { createApp } from 'vue';
 	import App from './App.vue';
 	import ElementPlus from 'element-plus';
@@ -120,14 +122,14 @@ const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
 	
 	接著
 	
-	```
+	```js
 	const app = createApp( App );
 	app.use( ElementPlus ).mount( "#app" )
 	```
 	
 	- ElementPlus 本地化設定
 	
-	```
+	```js
 	import 'dayjs/locale/zh-tw';
 	...
 	dayjs.locale( 'tw' );
@@ -139,7 +141,7 @@ const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
 	- 資料夾內新增 `index.js`，作為存取 API 服務的統一進入點
 	- 另外新增 `userRequest.js` 與 `walletRequest.js`，模組化 API 服務。例如：
 	
-	```
+	```js
 	import axios from "axios";
 	const userRequest = axios.create( {...} );
 	export const apiUserLogin = ( data ) => userRequest.post( URI, data );
@@ -147,21 +149,21 @@ const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
 	
 	接著在 `index.js`：
 	
-	```
+	```js
 	import { apiUserLogin } from "./userRequest";
 	export const postApiUserLogin = apiUserLogin;
 	```
 	
 	在需使用 API 服務之處即可引入 ( 例如`store/user/index.js` 內 )：
 	
-	```
+	```js
 	import { postApiUserLogin } from "../../api";
 	```
 	
 	- 實作 API 攔截器，統一 API 的錯誤處例與等待資料回傳
 		- 統一錯誤處理	
 		首先定義錯誤處理函式：
-			```
+			```js
 			const errorHandling = ( err ) => {
 				let errObj;
 				if ( err.response ) {
@@ -181,7 +183,7 @@ const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
 			};
 			```
 		接著在 `axios.create` 創造出來的實體中，註冊攔截器 `interceptors`，並使用此函式
-			```
+			```js
 			const Request = axios.create( {...} );
 			Request.interceptors.request.use(
 				( config ) => {
@@ -192,8 +194,8 @@ const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
 					return Promise.reject( e );
 				}
 			);
-						```
-						```
+			```
+			```js
 			userRequest.interceptors.response.use(
 				( response ) => {
 					...
@@ -203,7 +205,7 @@ const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
 					return Promise.reject( e );
 				}
 			);
-			```	
+			```
 		- 處理等待資料回傳時的畫面：引入 element-plus 中的 loading 服務，在送出 requset 時開啟loading frame，並於錯誤發生時或接受到回傳資料時關閉。相關使用方式可參照[官方文件](https://element-plus.org/#/zh-CN/component/loading)
 - Vuex
 - Vue Router
