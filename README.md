@@ -111,10 +111,10 @@ const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
 
 	- 全局引入 Element-plus，首先
 	```
-import { createApp } from 'vue';
-import App from './App.vue';
-import ElementPlus from 'element-plus';
-import 'element-plus/lib/theme-chalk/index.css';
+	import { createApp } from 'vue';
+	import App from './App.vue';
+	import ElementPlus from 'element-plus';
+	import 'element-plus/lib/theme-chalk/index.css';
 	```
 	接著
 	```
