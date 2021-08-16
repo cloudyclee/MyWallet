@@ -86,7 +86,7 @@ const router = createRouter( {
 	routes
 } );
 
-const whiteList = [ "/login" ];
+const whiteList = [ "/login", "/" ];
 router.beforeEach( async ( to, from ) => {
 
 	const token = computed( () => {
@@ -98,7 +98,7 @@ router.beforeEach( async ( to, from ) => {
 
 	if ( to.path === "/login" && token.value ) {
 		if ( !user.value.mainWallet ) {
-			return "/create";
+			return "/create/wallet";
 		} else {
 			return "/wallet";
 		}
