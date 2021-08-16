@@ -98,12 +98,10 @@
 - passport 設定
 	- 根目錄下建立 `config` 資料夾，並於其中建立 `passport_jwt.js` 檔
 	- 首先引入 `passport-jwt` 套件中的相關方法：	
-	
 		```js
 		const JwtStrategy = require( "passport-jwt" ).Strategy;
 		const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
 		```
-	
 	- 也需要引入 user model
 	- 使用 `ExtractJwt.fromAuthHeaderWithScheme()` 方法，便可驗證夾帶在 Header 中的 jwt tokenm。相關使用方式可參考[官方文件](http://www.passportjs.org/packages/passport-jwt/)
 
