@@ -97,13 +97,11 @@
 
 - passport 設定
 	- 根目錄下建立 `config` 資料夾，並於其中建立 `passport_jwt.js` 檔
-	- 首先引入 `passport-jwt` 套件中的相關方法：
-	
+	- 首先引入 `passport-jwt` 套件中的相關方法：	
 	```
 const JwtStrategy = require( "passport-jwt" ).Strategy;
 const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
 	```
-	
 	- 也需要引入 user model
 	- 使用 `ExtractJwt.fromAuthHeaderWithScheme()` 方法，便可驗證夾帶在 Header 中的 jwt tokenm。相關使用方式可參考[官方文件](http://www.passportjs.org/packages/passport-jwt/)
 
@@ -112,23 +110,18 @@ const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
 - 前端引入 Element-plus 框架
 
 	- 全局引入 Element-plus，首先
-	
 	```
 import { createApp } from 'vue';
 import App from './App.vue';
 import ElementPlus from 'element-plus';
 import 'element-plus/lib/theme-chalk/index.css';
 	```
-	
 	接著
-	
 	```
 const app = createApp( App );
 app.use( ElementPlus ).mount( "#app" )
 	```
-	
 	- ElementPlus 本地化設定
-	
 	```
 import 'dayjs/locale/zh-tw';
 ...
@@ -140,29 +133,22 @@ app.use( ElementPlus, { locale } ).mount( "#app" )
 	- 在 `/src` 目錄中新增 `api` 資料夾
 	- 資料夾內新增 `index.js`，作為存取 API 服務的統一進入點
 	- 另外新增 `userRequest.js` 與 `walletRequest.js`，模組化 API 服務。例如：
-	
 	```
 import axios from "axios";
 const userRequest = axios.create( {...} );
 export const apiUserLogin = ( data ) => userRequest.post( URI, data );
 	```
-	
 	接著在 `index.js`：
-	
 	```
 import { apiUserLogin } from "./userRequest";
 export const postApiUserLogin = apiUserLogin;
 	```
-	
 	在需使用 API 服務之處即可引入 ( 例如`store/user/index.js` 內 )：
-	
 	```
 	import { postApiUserLogin } from "../../api";
 	```
-	
 	- 實作 API 攔截器，統一 API 的錯誤處例與等待資料回傳
-		- 統一錯誤處理
-		
+		- 統一錯誤處理	
 		首先定義錯誤處理函式：
 			```
 const errorHandling = ( err ) => {
@@ -183,9 +169,7 @@ const errorHandling = ( err ) => {
 	return errObj;
 };
 			```
-		
 		接著在 `axios.create` 創造出來的實體中，註冊攔截器 `interceptors`，並使用此函式
-		
 			```
 const Request = axios.create( {...} );
 Request.interceptors.request.use(
@@ -208,8 +192,7 @@ userRequest.interceptors.response.use(
 		return Promise.reject( e );
 	}
 );
-			```
-		
+			```	
 		- 處理等待資料回傳時的畫面：引入 element-plus 中的 loading 服務，在送出 requset 時開啟loading frame，並於錯誤發生時或接受到回傳資料時關閉。相關使用方式可參照[官方文件](https://element-plus.org/#/zh-CN/component/loading)
 - Vuex
 - Vue Router
