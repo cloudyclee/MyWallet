@@ -110,88 +110,99 @@ const ExtractJwt = require( "passport-jwt" ).ExtractJwt;
 - 前端引入 Element-plus 框架
 
 	- 全局引入 Element-plus，首先
+	
 	```
 	import { createApp } from 'vue';
 	import App from './App.vue';
 	import ElementPlus from 'element-plus';
 	import 'element-plus/lib/theme-chalk/index.css';
 	```
+	
 	接著
+	
 	```
-const app = createApp( App );
-app.use( ElementPlus ).mount( "#app" )
+	const app = createApp( App );
+	app.use( ElementPlus ).mount( "#app" )
 	```
+	
 	- ElementPlus 本地化設定
+	
 	```
-import 'dayjs/locale/zh-tw';
-...
-dayjs.locale( 'tw' );
-app.use( ElementPlus, { locale } ).mount( "#app" )
+	import 'dayjs/locale/zh-tw';
+	...
+	dayjs.locale( 'tw' );
+	app.use( ElementPlus, { locale } ).mount( "#app" )
 	```
 	
 - API 模組化與攔截器
 	- 在 `/src` 目錄中新增 `api` 資料夾
 	- 資料夾內新增 `index.js`，作為存取 API 服務的統一進入點
 	- 另外新增 `userRequest.js` 與 `walletRequest.js`，模組化 API 服務。例如：
+	
 	```
-import axios from "axios";
-const userRequest = axios.create( {...} );
-export const apiUserLogin = ( data ) => userRequest.post( URI, data );
+	import axios from "axios";
+	const userRequest = axios.create( {...} );
+	export const apiUserLogin = ( data ) => userRequest.post( URI, data );
 	```
+	
 	接著在 `index.js`：
+	
 	```
-import { apiUserLogin } from "./userRequest";
-export const postApiUserLogin = apiUserLogin;
+	import { apiUserLogin } from "./userRequest";
+	export const postApiUserLogin = apiUserLogin;
 	```
+	
 	在需使用 API 服務之處即可引入 ( 例如`store/user/index.js` 內 )：
+	
 	```
 	import { postApiUserLogin } from "../../api";
 	```
+	
 	- 實作 API 攔截器，統一 API 的錯誤處例與等待資料回傳
 		- 統一錯誤處理	
 		首先定義錯誤處理函式：
 			```
-const errorHandling = ( err ) => {
-	let errObj;
-	if ( err.response ) {
-		// 接受到 response 但 response 回應錯誤時
-		...
-		errObj = err.response.data;
-	} else if ( err.request ) {
-		// 已發出 request 但沒有收到 response
-		...
-		errObj = err.request;
-	} else {
-		// 發出 request 的過程中遭遇錯誤
-		...
-		errObj = err.message;
-	}
-	return errObj;
-};
+			const errorHandling = ( err ) => {
+				let errObj;
+				if ( err.response ) {
+					// 接受到 response 但 response 回應錯誤時
+					...
+					errObj = err.response.data;
+				} else if ( err.request ) {
+					// 已發出 request 但沒有收到 response
+					...
+					errObj = err.request;
+				} else {
+					// 發出 request 的過程中遭遇錯誤
+					...
+					errObj = err.message;
+				}
+				return errObj;
+			};
 			```
 		接著在 `axios.create` 創造出來的實體中，註冊攔截器 `interceptors`，並使用此函式
 			```
-const Request = axios.create( {...} );
-Request.interceptors.request.use(
-	( config ) => {
-		...
-	},
-	( error ) => {
-		const e = errorHandling( error );
-		return Promise.reject( e );
-	}
-);
-			```
-			```
-userRequest.interceptors.response.use(
-	( response ) => {
-		...
-	},
-	( error ) => {
-		const e = errorHandling( error );
-		return Promise.reject( e );
-	}
-);
+			const Request = axios.create( {...} );
+			Request.interceptors.request.use(
+				( config ) => {
+					...
+				},
+				( error ) => {
+					const e = errorHandling( error );
+					return Promise.reject( e );
+				}
+			);
+						```
+						```
+			userRequest.interceptors.response.use(
+				( response ) => {
+					...
+				},
+				( error ) => {
+					const e = errorHandling( error );
+					return Promise.reject( e );
+				}
+			);
 			```	
 		- 處理等待資料回傳時的畫面：引入 element-plus 中的 loading 服務，在送出 requset 時開啟loading frame，並於錯誤發生時或接受到回傳資料時關閉。相關使用方式可參照[官方文件](https://element-plus.org/#/zh-CN/component/loading)
 - Vuex
