@@ -120,7 +120,7 @@
 		import 'element-plus/lib/theme-chalk/index.css';
 		```
 	
-	接著
+		接著
 	
 		```js
 		const app = createApp( App );
@@ -147,14 +147,14 @@
 		export const apiUserLogin = ( data ) => userRequest.post( URI, data );
 		```
 	
-	接著在 `index.js`：
+		接著在 `index.js`：
 	
 		```js
 		import { apiUserLogin } from "./userRequest";
 		export const postApiUserLogin = apiUserLogin;
 		```
 	
-	在需使用 API 服務之處即可引入 ( 例如`store/user/index.js` 內 )：
+		在需使用 API 服務之處即可引入 ( 例如`store/user/index.js` 內 )：
 	
 		```js
 		import { postApiUserLogin } from "../../api";
